@@ -1,30 +1,18 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "sonner"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { submitContactForm } from "@/app/actions";
+import { useState } from "react";
 
 const formSchema = z.object({
   companyName: z.string().min(2, {
@@ -56,7 +44,7 @@ const formSchema = z.object({
   message: z.string().min(10, {
     message: "お問い合わせ内容は10文字以上で入力してください。",
   }),
-})
+});
 
 const purposes = [
   { value: "purchase", label: "購入を検討" },
@@ -64,9 +52,11 @@ const purposes = [
   { value: "custom", label: "カスタマイズ製品の相談" },
   { value: "info", label: "製品について質問" },
   { value: "other", label: "その他" },
-]
+];
 
 export default function ContactPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -84,15 +74,25 @@ export default function ContactPage() {
       needsConsultation: false,
       message: "",
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      console.log(values)
-      toast.success("お問い合わせを受け付けました。")
-      form.reset()
-    } catch (error) {
-      toast.error("エラーが発生しました。もう一度お試しください。")
+      setIsSubmitting(true);
+      // サーバーアクションを呼び出し
+      const result = await submitContactForm(values);
+
+      if (result.success) {
+        toast.success("お問い合わせを受け付けました。");
+        form.reset();
+      } else {
+        throw new Error(result.error || "エラーが発生しました。");
+      }
+    } catch (error: any) {
+      toast.error(`エラーが発生しました。${error.message || "もう一度お試しください。"}`);
+      console.error("Error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -101,9 +101,7 @@ export default function ContactPage() {
       <Card className="max-w-3xl mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">お問い合わせ</CardTitle>
-          <CardDescription className="text-lg mt-2">
-            製品に関するご質問やご相談を承ります
-          </CardDescription>
+          <CardDescription className="text-lg mt-2">製品に関するご質問やご相談を承ります</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -244,9 +242,7 @@ export default function ContactPage() {
                       <FormControl>
                         <Input placeholder="例: 100着" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        具体的な数量が決まっていない場合は空欄で構いません
-                      </FormDescription>
+                      <FormDescription>具体的な数量が決まっていない場合は空欄で構いません</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -283,18 +279,11 @@ export default function ContactPage() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        専門スタッフからの提案を希望する
-                      </FormLabel>
-                      <FormDescription>
-                        チェックを入れると、当社の専門スタッフから最適な商品のご提案をさせていただきます
-                      </FormDescription>
+                      <FormLabel>専門スタッフからの提案を希望する</FormLabel>
+                      <FormDescription>チェックを入れると、当社の専門スタッフから最適な商品のご提案をさせていただきます</FormDescription>
                     </div>
                   </FormItem>
                 )}
@@ -307,22 +296,20 @@ export default function ContactPage() {
                   <FormItem>
                     <FormLabel>お問い合わせ内容</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="ご要望やご質問の詳細をご記入ください"
-                        className="min-h-[150px]"
-                        {...field}
-                      />
+                      <Textarea placeholder="ご要望やご質問の詳細をご記入ください" className="min-h-[150px]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="w-full">送信する</Button>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "送信中..." : "送信する"}
+              </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
