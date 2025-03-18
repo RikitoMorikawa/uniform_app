@@ -1,49 +1,35 @@
 "use server";
 
-import dbConnect from "@/lib/db";
-import Contact from "@/models/Contact";
+import { Contact, ContactFormData } from "@/types/contact";
 import nodemailer from "nodemailer";
-import mongoose from "mongoose";
-
-interface ContactFormData {
-  companyName: string;
-  department?: string;
-  name: string;
-  email: string;
-  phone: string;
-  postalCode: string;
-  address: string;
-  purpose: string;
-  quantity?: string;
-  preferredColors?: string;
-  preferredMaterials?: string;
-  needsConsultation: boolean;
-  message: string;
-}
+import { connect, DB_NAME, disconnect } from "@/lib/mongodb";
 
 export async function submitContactForm(formData: ContactFormData) {
-  console.log("サーバーアクション: コンタクトフォーム送信を処理します");
-
   try {
     // 環境変数のチェック
     if (!process.env.MONGODB_URI) {
       throw new Error("MONGODB_URI 環境変数が設定されていません");
     }
 
-    // データベース接続
-    console.log("データベースに接続しています...");
-    await dbConnect();
-    console.log("データベース接続成功 - データベース名:", mongoose.connection.db?.databaseName);
+    // 現在の日時を追加
+    const contactData = {
+      ...formData,
+      createdAt: new Date(),
+    };
 
-    // データベースに保存
-    console.log("データベースに保存しています...");
-    const contact = await Contact.create(formData);
-    console.log("データベースに保存しました: ID =", contact._id);
-    console.log("保存先コレクション:", Contact.collection.name);
+    // MongoDBに接続
+    const client = await connect();
+
+    // データベースとコレクションを選択
+    const db = client.db(DB_NAME);
+    const collection = db.collection<Contact>("Contact");
+
+    // データをコレクションに挿入
+    const result = await collection.insertOne(contactData);
+    console.log("データベースに保存しました: ID =", result.insertedId);
 
     // メール送信の設定
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      console.log("メール送信を設定しています...");
       try {
         const transporter = nodemailer.createTransport({
           service: "gmail",
@@ -79,10 +65,8 @@ ${formData.message}
 
         // メール送信
         await transporter.sendMail(mailOptions);
-        console.log("メール送信成功");
       } catch (emailError) {
         console.error("メール送信エラー:", emailError);
-        // メール送信エラーはフォーム送信の成功に影響しない
       }
     }
 
@@ -96,14 +80,15 @@ ${formData.message}
       errorMessage += ` 詳細: ${error.message}`;
     }
 
-    if (error.name === "ValidationError") {
-      return {
-        success: false,
-        error: errorMessage,
-        validationErrors: error.errors,
-      };
-    }
-
     return { success: false, error: errorMessage };
+  } finally {
+    // 本番環境でのみ接続を閉じる
+    if (process.env.NODE_ENV !== "development") {
+      try {
+        await disconnect();
+      } catch (closeError) {
+        console.error("MongoDB接続を閉じる際にエラーが発生しました:", closeError);
+      }
+    }
   }
 }
