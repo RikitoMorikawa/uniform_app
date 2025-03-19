@@ -12,13 +12,7 @@ interface BlogLayoutProps {
   children: React.ReactNode;
 }
 
-export default function BlogLayout({
-  title,
-  date,
-  category,
-  excerpt,
-  children,
-}: BlogLayoutProps) {
+export default function BlogLayout({ title, date, category, excerpt, children }: BlogLayoutProps) {
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
   const handleShare = async () => {
@@ -39,10 +33,7 @@ export default function BlogLayout({
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
       {/* ナビゲーション */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors"
-        >
+        <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
           <ChevronLeft className="h-4 w-4 mr-1" />
           記事一覧に戻る
         </Link>
@@ -59,7 +50,8 @@ export default function BlogLayout({
                 <time dateTime={date}>{formatDate(new Date(date))}</time>
               </div>
               <Link
-                href={`/category/${category.toLowerCase()}`}
+                // href={`/category/${category.toLowerCase()}`}
+                href={`/`}
                 className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full hover:bg-primary/20 transition-colors"
               >
                 <Tag className="h-4 w-4" />
@@ -69,9 +61,7 @@ export default function BlogLayout({
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80">
               {title}
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-center leading-relaxed">
-              {excerpt}
-            </p>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-center leading-relaxed">{excerpt}</p>
           </div>
         </div>
 
@@ -88,12 +78,14 @@ export default function BlogLayout({
 
         {/* 記事本文 */}
         <div className="prose prose-lg dark:prose-invert max-w-none bg-card rounded-2xl p-8 shadow-lg shadow-primary/5 border border-primary/5">
-          <div className="prose-headings:bg-clip-text prose-headings:text-transparent prose-headings:bg-gradient-to-r prose-headings:from-foreground prose-headings:via-foreground/90 prose-headings:to-foreground/80
+          <div
+            className="prose-headings:bg-clip-text prose-headings:text-transparent prose-headings:bg-gradient-to-r prose-headings:from-foreground prose-headings:via-foreground/90 prose-headings:to-foreground/80
                         prose-a:text-primary prose-a:no-underline hover:prose-a:underline
                         prose-img:rounded-lg prose-img:shadow-md
                         prose-blockquote:border-l-primary prose-blockquote:bg-muted/50 prose-blockquote:py-1 prose-blockquote:px-6 prose-blockquote:rounded-r-lg
                         prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md
-                        prose-pre:bg-muted/50 prose-pre:shadow-inner">
+                        prose-pre:bg-muted/50 prose-pre:shadow-inner"
+          >
             {children}
           </div>
         </div>
