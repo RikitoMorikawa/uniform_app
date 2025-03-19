@@ -1,3 +1,4 @@
+// app/contact/page.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { submitContactForm } from "@/app/actions";
 import { useState } from "react";
+import { ContactFormData } from "@/types/contact"; // 型定義がある場合
 
 const formSchema = z.object({
   companyName: z.string().min(2, {
@@ -79,8 +80,17 @@ export default function ContactPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsSubmitting(true);
-      // サーバーアクションを呼び出し
-      const result = await submitContactForm(values);
+
+      // APIルートを呼び出し
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success("お問い合わせを受け付けました。");
