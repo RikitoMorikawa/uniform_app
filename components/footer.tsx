@@ -15,7 +15,7 @@ export default function Footer() {
           <Link href="/contact" className="transition-colors hover:text-foreground/80 text-foreground/60">
             お問い合わせ
           </Link>
-          <Link href="/privacy-policy" className="transition-colors hover:text-foreground/80 text-foreground/60">
+          <Link href="" className="transition-colors hover:text-foreground/80 text-foreground/60">
             プライバシーポリシー
           </Link>
         </nav>
