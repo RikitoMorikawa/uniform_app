@@ -1,58 +1,49 @@
 // app/api/contact/route.ts
 import { ContactFormData } from "@/types/contact";
 import { NextResponse } from "next/server";
+import nodemailer from "nodemailer";
+import { connect, DB_NAME, disconnect } from "@/lib/mongodb";
+import { MongoClient } from "mongodb";
 
 export async function POST(request: Request) {
+  let client!: MongoClient;
+
   try {
     // リクエストボディからフォームデータを取得
     const formData: ContactFormData = await request.json();
-
-    // 成功レスポンスをすぐに返す
     console.log("フォームデータ受信:", formData);
 
-    // バックグラウンドで処理（別のタスクとして実行）
-    processingFormData(formData).catch((err) => console.error("バックグラウンド処理エラー:", err));
-
-    return NextResponse.json({
-      success: true,
-      message: "お問い合わせを受け付けました。",
-    });
-  } catch (error: any) {
-    console.error("APIルートエラー:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "エラーが発生しました",
-      },
-      {
-        status: 500,
-      }
-    );
-  }
-}
-
-// 非同期に実行する関数
-async function processingFormData(formData: ContactFormData) {
-  try {
-    const { connect, DB_NAME, disconnect } = await import("@/lib/mongodb");
-    const nodemailer = await import("nodemailer");
-
-    // MongoDBに接続
-    const client = await connect();
-    const db = client.db(DB_NAME);
-    const collection = db.collection("Contact");
-
-    // データをコレクションに挿入
+    // データをコレクションに挿入するためのデータ準備
     const contactData = {
       ...formData,
       createdAt: new Date(),
     };
 
-    await collection.insertOne(contactData);
+    // MongoDBに接続
+    client = await connect();
 
-    // メール送信の設定
+    // セッションを開始してトランザクションを使用
+    const session = client.startSession();
+    let dbResult;
+
+    try {
+      // トランザクション開始
+      await session.withTransaction(async () => {
+        const db = client.db(DB_NAME);
+        const collection = db.collection("Contact");
+
+        // データベースに保存
+        dbResult = await collection.insertOne(contactData, { session });
+        console.log("データベースに保存しました: ID =", dbResult.insertedId);
+      });
+    } finally {
+      // セッションを終了
+      await session.endSession();
+    }
+
+    // メール送信処理
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      const transporter = nodemailer.default.createTransport({
+      const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
           user: process.env.GMAIL_USER,
@@ -84,15 +75,36 @@ ${formData.message}
         `,
       };
 
-      // メール送信
+      // メール送信を待機
       await transporter.sendMail(mailOptions);
+      console.log("メール送信完了");
     }
 
-    // 接続を閉じる
-    if (process.env.NODE_ENV !== "development") {
-      await disconnect();
+    // すべての処理が完了した後にレスポンスを返す
+    return NextResponse.json({
+      success: true,
+      message: "お問い合わせを受け付けました。",
+    });
+  } catch (error: any) {
+    console.error("APIルートエラー:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "エラーが発生しました",
+      },
+      {
+        status: 500,
+      }
+    );
+  } finally {
+    // 必ずデータベース接続を閉じる
+    if (client) {
+      try {
+        await disconnect();
+        console.log("DB接続を閉じました");
+      } catch (closeError) {
+        console.error("DB接続を閉じる際にエラーが発生:", closeError);
+      }
     }
-  } catch (error) {
-    console.error("バックグラウンド処理でエラーが発生:", error);
   }
 }
