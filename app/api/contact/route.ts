@@ -10,6 +10,9 @@ export async function POST(request: Request) {
     // リクエストボディからフォームデータを取得
     const formData: ContactFormData = await request.json();
 
+    // 簡単なログ出力だけ
+    console.log("フォームデータ受信:", formData);
+
     // 環境変数のチェック
     if (!process.env.MONGODB_URI) {
       throw new Error("MONGODB_URI 環境変数が設定されていません");
