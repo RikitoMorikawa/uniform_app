@@ -1,7 +1,6 @@
 // types/contact.ts
 
-// フォームからの入力データの型定義
-export interface ContactFormData {
+export interface ContactFormInput {
   companyName: string;
   department?: string;
   name: string;
@@ -15,13 +14,15 @@ export interface ContactFormData {
   preferredMaterials?: string;
   needsConsultation: boolean;
   message: string;
-  createdAt: Date;
+}
+
+export interface ContactFormData extends ContactFormInput {
+  createdAt?: Date;
 }
 
 // データベースに保存されるコンタクトデータの型定義
 export interface Contact extends ContactFormData {
   _id?: string;
-  createdAt: Date;
 }
 
 // APIレスポンスの型定義
