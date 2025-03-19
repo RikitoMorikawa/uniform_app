@@ -3,7 +3,7 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
-  output: "export",
+  // output: "export" を削除
   eslint: {
     ignoreDuringBuilds: true,
   },
