@@ -13,7 +13,9 @@ export async function getAllPosts(): Promise<Post[]> {
   const allPosts = await Promise.all(
     fileNames.map(async (fileName) => {
       const id = fileName.replace(/\.md$/, '')
-      return await getPostById(id)
+      const post = await getPostById(id)
+      if (!post) throw new Error(`Post not found: ${id}`)
+      return post
     })
   )
 
@@ -51,6 +53,7 @@ export async function getPostById(id: string): Promise<Post | null> {
       content: contentHtml,
     }
   } catch (error) {
+    console.error(`Error loading post ${id}:`, error)
     return null
   }
 }
