@@ -1,8 +1,5 @@
-// /Users/apple/uniform_app/app/api/contact/route.ts
-
-import { Contact, ContactFormData } from "@/types/contact";
-import nodemailer from "nodemailer";
-import { connect, DB_NAME, disconnect } from "@/lib/mongodb";
+// app/api/contact/route.ts
+import { ContactFormData } from "@/types/contact";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -10,48 +7,65 @@ export async function POST(request: Request) {
     // リクエストボディからフォームデータを取得
     const formData: ContactFormData = await request.json();
 
-    // 簡単なログ出力だけ
+    // 成功レスポンスをすぐに返す
     console.log("フォームデータ受信:", formData);
 
-    // 環境変数のチェック
-    if (!process.env.MONGODB_URI) {
-      throw new Error("MONGODB_URI 環境変数が設定されていません");
-    }
+    // バックグラウンドで処理（別のタスクとして実行）
+    processingFormData(formData).catch((err) => console.error("バックグラウンド処理エラー:", err));
 
-    // 現在の日時を追加
+    return NextResponse.json({
+      success: true,
+      message: "お問い合わせを受け付けました。",
+    });
+  } catch (error: any) {
+    console.error("APIルートエラー:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "エラーが発生しました",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+// 非同期に実行する関数
+async function processingFormData(formData: ContactFormData) {
+  try {
+    const { connect, DB_NAME, disconnect } = await import("@/lib/mongodb");
+    const nodemailer = await import("nodemailer");
+
+    // MongoDBに接続
+    const client = await connect();
+    const db = client.db(DB_NAME);
+    const collection = db.collection("Contact");
+
+    // データをコレクションに挿入
     const contactData = {
       ...formData,
       createdAt: new Date(),
     };
 
-    // MongoDBに接続
-    const client = await connect();
-
-    // データベースとコレクションを選択
-    const db = client.db(DB_NAME);
-    const collection = db.collection<Contact>("Contact");
-
-    // データをコレクションに挿入
-    const result = await collection.insertOne(contactData);
-    console.log("データベースに保存しました: ID =", result.insertedId);
+    await collection.insertOne(contactData);
 
     // メール送信の設定
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      try {
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_APP_PASSWORD,
-          },
-        });
+      const transporter = nodemailer.default.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD,
+        },
+      });
 
-        // メール送信オプション
-        const mailOptions = {
-          from: process.env.GMAIL_USER,
-          to: process.env.GMAIL_USER,
-          subject: "新しいお問い合わせが届きました",
-          text: `
+      // メール送信オプション
+      const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: process.env.GMAIL_USER,
+        subject: "新しいお問い合わせが届きました",
+        text: `
 会社名: ${formData.companyName}
 部署名: ${formData.department || "未入力"}
 担当者名: ${formData.name}
@@ -67,35 +81,18 @@ export async function POST(request: Request) {
 
 お問い合わせ内容:
 ${formData.message}
-          `,
-        };
+        `,
+      };
 
-        // メール送信
-        await transporter.sendMail(mailOptions);
-      } catch (emailError) {
-        console.error("メール送信エラー:", emailError);
-      }
+      // メール送信
+      await transporter.sendMail(mailOptions);
     }
 
-    return NextResponse.json({ success: true, message: "お問い合わせを受け付けました。" });
-  } catch (error: any) {
-    console.error("APIルートエラー:", error);
-
-    // エラーメッセージを詳細に
-    let errorMessage = "お問い合わせの送信に失敗しました。";
-    if (error.message) {
-      errorMessage += ` 詳細: ${error.message}`;
-    }
-
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
-  } finally {
-    // 本番環境でのみ接続を閉じる
+    // 接続を閉じる
     if (process.env.NODE_ENV !== "development") {
-      try {
-        await disconnect();
-      } catch (closeError) {
-        console.error("MongoDB接続を閉じる際にエラーが発生しました:", closeError);
-      }
+      await disconnect();
     }
+  } catch (error) {
+    console.error("バックグラウンド処理でエラーが発生:", error);
   }
 }
