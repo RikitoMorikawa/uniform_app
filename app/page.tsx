@@ -11,46 +11,42 @@ interface SearchParams {
   date?: string;
 }
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function Home({ searchParams }: { searchParams: SearchParams }) {
   const posts = await getAllPosts();
-  
+
   // 検索条件に基づいてフィルタリング
   const filteredPosts = posts.filter((post) => {
     // タイトルでフィルタリング
     if (searchParams.title && !post.title.toLowerCase().includes(searchParams.title.toLowerCase())) {
       return false;
     }
-    
+
     // カテゴリーでフィルタリング
     if (searchParams.category && searchParams.category !== "all") {
-      const normalizedPostCategory = post.category.toLowerCase().replace(/[空調服|作業服|警備服]/, '');
       const normalizedSearchCategory = searchParams.category.toLowerCase();
-      
+      const normalizedPostCategory = post.category.toLowerCase();
+
       switch (normalizedSearchCategory) {
-        case 'workwear':
-          if (!normalizedPostCategory.includes('作業服')) return false;
+        case "workwear":
+          if (!normalizedPostCategory.includes("作業服")) return false;
           break;
-        case 'coolingwear':
-          if (!normalizedPostCategory.includes('空調服')) return false;
+        case "coolingwear":
+          if (!normalizedPostCategory.includes("空調服")) return false;
           break;
-        case 'securitywear':
-          if (!normalizedPostCategory.includes('警備服')) return false;
+        case "securitywear":
+          if (!normalizedPostCategory.includes("警備服")) return false;
           break;
       }
     }
-    
+
     // 日付でフィルタリング
     if (searchParams.date) {
-      const postDate = new Date(post.date).toISOString().split('T')[0];
+      const postDate = new Date(post.date).toISOString().split("T")[0];
       if (postDate !== searchParams.date) {
         return false;
       }
     }
-    
+
     return true;
   });
 
@@ -58,12 +54,8 @@ export default async function Home({
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
       <div className="container py-12">
         <div className="relative mb-12 text-center">
-          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60">
-            最新の記事
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            作業服、空調服、警備服に関する最新情報をお届けします
-          </p>
+          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60">最新の記事</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">作業服、空調服、警備服に関する最新情報をお届けします</p>
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
         </div>
 
@@ -73,9 +65,7 @@ export default async function Home({
 
         {filteredPosts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-lg text-muted-foreground">
-              検索条件に一致する記事が見つかりませんでした。
-            </p>
+            <p className="text-lg text-muted-foreground">検索条件に一致する記事が見つかりませんでした。</p>
           </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -86,9 +76,7 @@ export default async function Home({
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                       <div className="flex items-center gap-2 bg-muted/50 px-3 py-1 rounded-full">
                         <Clock className="h-4 w-4" />
-                        <time dateTime={post.date}>
-                          {formatDate(new Date(post.date))}
-                        </time>
+                        <time dateTime={post.date}>{formatDate(new Date(post.date))}</time>
                       </div>
                       <div className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full">
                         <Tag className="h-4 w-4" />
@@ -101,9 +89,7 @@ export default async function Home({
                     <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground line-clamp-3">
-                      {post.excerpt}
-                    </p>
+                    <p className="text-muted-foreground line-clamp-3">{post.excerpt}</p>
                   </CardContent>
                 </Card>
               </Link>

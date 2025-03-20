@@ -1,3 +1,4 @@
+// components/search-bar.tsx
 "use client";
 
 import { useState } from "react";
@@ -63,16 +64,11 @@ export default function SearchBar() {
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="記事タイトルで検索"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="記事タイトルで検索" value={title} onChange={(e) => setTitle(e.target.value)} className="pl-9 bg-white" />
             </div>
           </div>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] bg-white">
               <SelectValue placeholder="カテゴリー" />
             </SelectTrigger>
             <SelectContent>
@@ -85,24 +81,13 @@ export default function SearchBar() {
           </Select>
           <Popover>
             <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-[140px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
+              <Button variant="outline" className={cn("w-[140px] justify-start text-left font-normal bg-white", !date && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {date ? format(date, "yyyy年MM月dd日", { locale: ja }) : "日付を選択"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
-              <CalendarComponent
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                initialFocus
-              />
+              <CalendarComponent mode="single" selected={date} onSelect={setDate} initialFocus />
             </PopoverContent>
           </Popover>
         </div>
