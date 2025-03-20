@@ -13,9 +13,14 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <Image src="/favicon.png" alt="ワークウェアブログ" width={36} height={36} />
-          <span className="font-bold text-gray-800">ワークウェアブログ</span>
+        <Link href="/" className="flex items-center">
+          <div className="flex items-center space-x-2">
+            <Image src="/favicon.png" alt="ユニフォームナビ" width={36} height={36} />
+            <div className="flex flex-col">
+              <span className="font-bold text-gray-800">ユニフォームナビ</span>
+              <span className="text-xs text-gray-500 hidden sm:inline">現場のチカラ - 作業服情報サイト</span>
+            </div>
+          </div>
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">

@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 // 外部ファイルからインポート
 import { getRecommendations, Category, SecurityBrand, WorkwearFeature, CoolingFeature } from "@/lib/workwear-recommendations";
+// 成功ダイアログをインポート
+import SuccessDialog from "@/components/SuccessDialog";
 
 interface ContactInfo {
   companyName: string;
@@ -27,6 +29,9 @@ export default function WorkwearSelector() {
   const [showContactForm, setShowContactForm] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGlowing, setIsGlowing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     companyName: "",
     contactPerson: "",
@@ -37,7 +42,7 @@ export default function WorkwearSelector() {
   useEffect(() => {
     const glowInterval = setInterval(() => {
       setIsGlowing((prev) => !prev);
-    }, 5000); // 3秒ごとに切り替え
+    }, 5000); // 5秒ごとに切り替え
 
     return () => clearInterval(glowInterval);
   }, []);
@@ -64,14 +69,60 @@ export default function WorkwearSelector() {
     });
   };
 
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("お問い合わせを受け付けました。担当者からご連絡いたします。");
-    setIsDialogOpen(false); // モーダルを閉じる
-  };
-
   // 現在の選択に基づいて推奨製品を取得
   const recommendations = getRecommendations(category, securityBrand, workwearFeature, coolingFeature);
+
+  // 選択された特徴を文字列で取得する関数
+  const getSelectedFeature = () => {
+    if (securityBrand) return securityBrand;
+    if (workwearFeature) return workwearFeature;
+    if (coolingFeature) return coolingFeature;
+    return null;
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // APIエンドポイントにデータを送信
+      const selectedFeature = getSelectedFeature();
+      const response = await fetch("/api/workwear_recommend", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...contactInfo,
+          category,
+          selectedFeature,
+          recommendations: recommendations || [],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "お問い合わせの送信に失敗しました");
+      }
+
+      // 成功メッセージをセット
+      setSuccessMessage("お問い合わせを受け付けました。担当者から数日以内にご連絡いたします。");
+
+      // メインダイアログを閉じる
+      setIsDialogOpen(false);
+
+      // 成功ダイアログを表示
+      setShowSuccessDialog(true);
+    } catch (error) {
+      console.error("問い合わせ送信エラー:", error);
+      toast.error(error instanceof Error ? error.message : "エラーが発生しました。後でもう一度お試しください。");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed-selector">
@@ -89,7 +140,7 @@ export default function WorkwearSelector() {
         >
           {/* 光るエフェクト */}
           <span className={`absolute inset-0 bg-white/20 skew-x-[-20deg] transform -translate-x-full ${isGlowing ? "animate-shine" : "opacity-0"}`}></span>
-          最適な作業服を探す
+          業界最適ワークウェアを見つける
         </Button>
       </div>
 
@@ -126,7 +177,7 @@ export default function WorkwearSelector() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="text-2xl">
-              {showContactForm ? "お問い合わせ情報の入力" : showResults ? "おすすめの作業服" : "最適な作業服を探す"}
+              {showContactForm ? "お見積り・問い合わせ情報の入力" : showResults ? "プロ厳選のおすすめ製品" : "職場に最適なワークウェアを探す"}
             </DialogTitle>
           </DialogHeader>
 
@@ -141,7 +192,7 @@ export default function WorkwearSelector() {
                   value={contactInfo.companyName}
                   onChange={(e) => setContactInfo({ ...contactInfo, companyName: e.target.value })}
                   required
-                  placeholder="例：株式会社ワークウェア"
+                  placeholder="例：株式会社プロフェッショナルウェア"
                   className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
@@ -154,7 +205,7 @@ export default function WorkwearSelector() {
                   value={contactInfo.contactPerson}
                   onChange={(e) => setContactInfo({ ...contactInfo, contactPerson: e.target.value })}
                   required
-                  placeholder="例：山田 太郎"
+                  placeholder="例：佐藤 一郎"
                   className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
@@ -168,13 +219,13 @@ export default function WorkwearSelector() {
                   value={contactInfo.email}
                   onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
                   required
-                  placeholder="例：info@workwear.co.jp"
+                  placeholder="例：contact@pro-wear.co.jp"
                   className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
               <div className="space-y-3 pt-4">
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white">
-                  送信する
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white" disabled={isSubmitting}>
+                  {isSubmitting ? "送信中..." : "無料でお見積り依頼"}
                 </Button>
                 <div className="flex justify-end">
                   <Button type="button" variant="outline" onClick={() => setShowContactForm(false)} className="border-gray-300">
@@ -190,19 +241,19 @@ export default function WorkwearSelector() {
                   <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => setCategory("workwear")}>
                     <CardHeader className="text-center">
                       <Shirt className="w-12 h-12 mx-auto mb-2" />
-                      <CardTitle>作業服</CardTitle>
+                      <CardTitle>ワークウェア</CardTitle>
                     </CardHeader>
                   </Card>
                   <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => setCategory("security")}>
                     <CardHeader className="text-center">
                       <Shield className="w-12 h-12 mx-auto mb-2" />
-                      <CardTitle>警備服</CardTitle>
+                      <CardTitle>セキュリティウェア</CardTitle>
                     </CardHeader>
                   </Card>
                   <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => setCategory("cooling")}>
                     <CardHeader className="text-center">
                       <Wind className="w-12 h-12 mx-auto mb-2" />
-                      <CardTitle>空調服</CardTitle>
+                      <CardTitle>クーリングウェア</CardTitle>
                     </CardHeader>
                   </Card>
                 </div>
@@ -218,8 +269,8 @@ export default function WorkwearSelector() {
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>ベストユニフォーム</CardTitle>
-                      <CardDescription>高品質・高機能な警備服</CardDescription>
+                      <CardTitle>プレミアムライン</CardTitle>
+                      <CardDescription>高品質・高機能なセキュリティウェア</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
@@ -230,7 +281,7 @@ export default function WorkwearSelector() {
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>金星</CardTitle>
+                      <CardTitle>スタンダードライン</CardTitle>
                       <CardDescription>コストパフォーマンスに優れた警備服</CardDescription>
                     </CardHeader>
                   </Card>
@@ -247,8 +298,8 @@ export default function WorkwearSelector() {
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>耐久性重視</CardTitle>
-                      <CardDescription>過酷な現場でも安心</CardDescription>
+                      <CardTitle>タフネス重視</CardTitle>
+                      <CardDescription>過酷な環境でも長持ち</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
@@ -260,7 +311,7 @@ export default function WorkwearSelector() {
                   >
                     <CardHeader>
                       <CardTitle>快適性重視</CardTitle>
-                      <CardDescription>長時間の作業も快適に</CardDescription>
+                      <CardDescription>長時間の着用も快適に</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
@@ -271,8 +322,8 @@ export default function WorkwearSelector() {
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>コスト重視</CardTitle>
-                      <CardDescription>リーズナブルで実用的</CardDescription>
+                      <CardTitle>効率性重視</CardTitle>
+                      <CardDescription>高コスパで実用的</CardDescription>
                     </CardHeader>
                   </Card>
                 </div>
@@ -288,8 +339,8 @@ export default function WorkwearSelector() {
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>バッテリー重視</CardTitle>
-                      <CardDescription>長時間の使用が可能</CardDescription>
+                      <CardTitle>持続力重視</CardTitle>
+                      <CardDescription>長時間稼働可能なモデル</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
@@ -300,8 +351,8 @@ export default function WorkwearSelector() {
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>風量重視</CardTitle>
-                      <CardDescription>強力な冷却効果</CardDescription>
+                      <CardTitle>冷却力重視</CardTitle>
+                      <CardDescription>強力な冷却システム搭載</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
@@ -312,8 +363,8 @@ export default function WorkwearSelector() {
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>軽量重視</CardTitle>
-                      <CardDescription>負担の少ない着用感</CardDescription>
+                      <CardTitle>軽量性重視</CardTitle>
+                      <CardDescription>着用感の軽い新開発素材</CardDescription>
                     </CardHeader>
                   </Card>
                 </div>
@@ -340,7 +391,7 @@ export default function WorkwearSelector() {
                 onClick={() => setShowContactForm(true)}
                 className="w-full bg-orange-400 hover:bg-orange-500 text-white text-lg font-bold shadow-md transition-all hover:shadow-lg py-3 rounded-lg"
               >
-                提案を依頼
+                無料サンプル・お見積り依頼
               </Button>
               <div className="grid grid-cols-2 gap-2">
                 <DialogClose asChild>
@@ -363,6 +414,9 @@ export default function WorkwearSelector() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* 成功ダイアログ - 共通コンポーネントを使用 */}
+      <SuccessDialog isOpen={showSuccessDialog} onClose={() => setShowSuccessDialog(false)} message={successMessage} />
     </div>
   );
 }

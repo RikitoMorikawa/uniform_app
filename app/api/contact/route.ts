@@ -1,9 +1,8 @@
-// app/api/contact/route.ts
 import { ContactFormData } from "@/types/contact";
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 import { connect, DB_NAME, disconnect } from "@/lib/mongodb";
 import { MongoClient } from "mongodb";
+import { sendAdminNotificationEmail } from "@/lib/email/contact/email-service";
 
 export async function POST(request: Request) {
   let client!: MongoClient;
@@ -41,49 +40,25 @@ export async function POST(request: Request) {
       await session.endSession();
     }
 
-    // メール送信処理
+    // 管理者へのメール通知送信
     if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_APP_PASSWORD,
-        },
-      });
-
-      // メール送信オプション
-      const mailOptions = {
-        from: process.env.GMAIL_USER,
-        to: process.env.GMAIL_USER,
-        subject: "新しいお問い合わせが届きました",
-        text: `
-会社名: ${formData.companyName}
-部署名: ${formData.department || "未入力"}
-担当者名: ${formData.name}
-メールアドレス: ${formData.email}
-電話番号: ${formData.phone}
-郵便番号: ${formData.postalCode}
-住所: ${formData.address}
-お問い合わせ目的: ${formData.purpose}
-希望数量: ${formData.quantity || "未入力"}
-希望カラー: ${formData.preferredColors || "未入力"}
-希望素材: ${formData.preferredMaterials || "未入力"}
-専門スタッフからの提案: ${formData.needsConsultation ? "希望する" : "希望しない"}
-
-お問い合わせ内容:
-${formData.message}
-        `,
-      };
-
-      // メール送信を待機
-      await transporter.sendMail(mailOptions);
-      console.log("メール送信完了");
+      try {
+        const emailResult = await sendAdminNotificationEmail(formData);
+        if (emailResult.success) {
+          console.log("管理者通知メール送信完了");
+        } else {
+          console.warn("管理者通知メール送信失敗:", emailResult.error);
+        }
+      } catch (emailError) {
+        console.error("メール送信エラー:", emailError);
+        // メール送信エラーはログに記録するが、APIレスポンスには影響させない
+      }
     }
 
     // すべての処理が完了した後にレスポンスを返す
     return NextResponse.json({
       success: true,
-      message: "お問い合わせを受け付けました。",
+      message: "お問い合わせを受け付けました。担当者から数日以内にご連絡いたします。",
     });
   } catch (error: any) {
     console.error("APIルートエラー:", error);

@@ -1,4 +1,3 @@
-// app/contact/page.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { ContactFormData } from "@/types/contact"; // 型定義がある場合
+import SuccessDialog from "@/components/SuccessDialog";
 
 const formSchema = z.object({
   companyName: z.string().min(2, {
@@ -57,6 +57,8 @@ const purposes = [
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,7 +95,11 @@ export default function ContactPage() {
       const result = await response.json();
 
       if (result.success) {
-        toast.success("お問い合わせを受け付けました。");
+        // 成功メッセージをセット
+        setSuccessMessage(result.message || "お問い合わせを受け付けました。担当者から数日以内にご連絡いたします。");
+        // 成功ダイアログを表示
+        setShowSuccessDialog(true);
+        // フォームをリセット
         form.reset();
       } else {
         throw new Error(result.error || "エラーが発生しました。");
@@ -320,6 +326,9 @@ export default function ContactPage() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* 成功ダイアログ */}
+      <SuccessDialog isOpen={showSuccessDialog} onClose={() => setShowSuccessDialog(false)} message={successMessage} />
     </div>
   );
 }
