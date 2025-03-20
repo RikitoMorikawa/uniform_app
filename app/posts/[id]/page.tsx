@@ -6,6 +6,7 @@ import { getPostById } from "@/lib/posts";
 import { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
+import { BlogPost } from "@/types/BlogPost";
 
 // クライアントコンポーネントとして構造化データを動的にロード
 // 正しいパスに修正
