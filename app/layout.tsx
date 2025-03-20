@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from "@/components/theme-provider";
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,15 +26,11 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Header />
           <main className="min-h-screen">{children}</main>
           <Footer />
+          <Analytics /> {/* Vercel Analytics の追加 */}
         </ThemeProvider>
       </body>
     </html>
