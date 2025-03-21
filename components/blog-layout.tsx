@@ -116,6 +116,9 @@ export default function BlogLayout({
               {title}
             </h1>
 
+            {/* タイトルの下に区切り線を追加 */}
+            <hr className="my-4 border-t border-muted" />
+
             {/* 記事内容 */}
             <div
               className="prose-headings:font-bold
