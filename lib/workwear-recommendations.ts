@@ -1,49 +1,36 @@
-// lib/workwear-recommendations.ts
-
-// 型定義
 export type Category = "workwear" | "security" | "cooling" | null;
 export type SecurityBrand = "best" | "kinsei" | null;
-export type WorkwearFeature = "durability" | "comfort" | "cost" | null;
-export type CoolingFeature = "battery" | "airflow" | "lightweight" | null;
+export type WorkwearFeature = "premium" | "cost" | "style" | null;
+export type CoolingFeature = "battery" | "airflow" | "cost" | null;
+export type CoolingType = "vest" | "short" | "long" | null;
 
-// 推奨製品を取得する関数
-export const getRecommendations = (
+export function getRecommendations(
   category: Category,
   securityBrand: SecurityBrand,
   workwearFeature: WorkwearFeature,
-  coolingFeature: CoolingFeature
-): string[] => {
-  if (category === "security") {
-    return securityBrand === "best"
-      ? ["ベストユニフォーム 警備服Aシリーズ", "ベストユニフォーム プロフェッショナルライン"]
-      : ["金星 警備服プレミアム", "金星 オールシーズンモデル"];
-  }
-
+  coolingFeature: CoolingFeature,
+  coolingType?: CoolingType
+): string[] {
   if (category === "workwear") {
-    switch (workwearFeature) {
-      case "durability":
-        return ["タカヤ 耐久王シリーズ", "自重堂 Z-DRAGON", "寅壱 プロフェッショナル"];
-      case "comfort":
-        return ["バートル エアークラフト", "アイトス 快適作業服", "クロダルマ AIR SERIES"];
-      case "cost":
-        return ["桑和 VALUE SERIES", "アタックベース エコノミー", "コーコス 現場職人"];
-      default:
-        return [];
+    if (workwearFeature === "premium") {
+      return ["ジーベック", "アイトス", "コーコス信岡"];
+    } else if (workwearFeature === "cost") {
+      return ["自重堂", "シンメン", "桑和"];
+    } else if (workwearFeature === "style") {
+      return ["バートル", "ジーベック", "TSデザイン"];
+    }
+  } else if (category === "security") {
+    return ["ベスト"];
+  } else if (category === "cooling") {
+    if (coolingFeature === "battery") {
+      return ["バートル", "村上被服", "ジーベック"];
+    } else if (coolingFeature === "airflow") {
+      return ["バートル", "桑和", "村上被服"];
+    } else if (coolingFeature === "cost") {
+      return ["バートル", "アイトス", "シンメン"];
     }
   }
 
-  if (category === "cooling") {
-    switch (coolingFeature) {
-      case "battery":
-        return ["空調服 バッテリー重視モデル", "サンエス 長時間稼働タイプ", "村上被服 大容量バッテリー"];
-      case "airflow":
-        return ["空調服 風量重視モデル", "サンエス パワフルエアー", "村上被服 ターボファン"];
-      case "lightweight":
-        return ["空調服 軽量モデル", "サンエス フェザーライト", "村上被服 ウルトラライト"];
-      default:
-        return [];
-    }
-  }
-
-  return [];
-};
+  // デフォルト（選択がない場合）
+  return ["選択条件に合った製品をご提案いたします", "お客様のご要望に応じてカスタマイズも可能です", "お問い合わせいただければ、詳細な製品情報をご案内します"];
+}

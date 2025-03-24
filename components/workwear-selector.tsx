@@ -4,14 +4,13 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shirt, Shield, Wind } from "lucide-react";
+import { Shirt, Shield, Wind, Sun, Snowflake, Star, DollarSign, Heart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-// 外部ファイルからインポート
 import { getRecommendations, Category, SecurityBrand, WorkwearFeature, CoolingFeature } from "@/lib/workwear-recommendations";
-// 成功ダイアログをインポート
 import SuccessDialog from "@/components/SuccessDialog";
+import ConsentSection from "@/components/ConsentSection";
 
 interface ContactInfo {
   companyName: string;
@@ -19,9 +18,14 @@ interface ContactInfo {
   email: string;
 }
 
+type Season = "all" | "summer" | null;
+type CoolingType = "vest" | "short" | "long" | null;
+
 export default function WorkwearSelector() {
-  // state定義
+  // 状態管理
   const [category, setCategory] = useState<Category>(null);
+  const [season, setSeason] = useState<Season>(null);
+  const [coolingType, setCoolingType] = useState<CoolingType>(null);
   const [securityBrand, setSecurityBrand] = useState<SecurityBrand>(null);
   const [workwearFeature, setWorkwearFeature] = useState<WorkwearFeature>(null);
   const [coolingFeature, setCoolingFeature] = useState<CoolingFeature>(null);
@@ -38,30 +42,35 @@ export default function WorkwearSelector() {
     email: "",
   });
 
-  // グローエフェクトの周期的な切り替え
+  // 同意チェックボックスのstate
+  const [isAgreed, setIsAgreed] = useState(false);
+
+  // 光るエフェクト
   useEffect(() => {
     const glowInterval = setInterval(() => {
       setIsGlowing((prev) => !prev);
-    }, 5000); // 5秒ごとに切り替え
+    }, 5000);
 
     return () => clearInterval(glowInterval);
   }, []);
 
-  // モーダルが閉じられた時にリセットする
+  // ダイアログが閉じたときにリセット
   useEffect(() => {
     if (!isDialogOpen) {
       resetSelections();
     }
   }, [isDialogOpen]);
 
-  // 関数定義
   const resetSelections = () => {
     setCategory(null);
+    setSeason(null);
+    setCoolingType(null);
     setSecurityBrand(null);
     setWorkwearFeature(null);
     setCoolingFeature(null);
     setShowResults(false);
     setShowContactForm(false);
+    setIsAgreed(false);
     setContactInfo({
       companyName: "",
       contactPerson: "",
@@ -69,10 +78,8 @@ export default function WorkwearSelector() {
     });
   };
 
-  // 現在の選択に基づいて推奨製品を取得
-  const recommendations = getRecommendations(category, securityBrand, workwearFeature, coolingFeature);
+  const recommendations = getRecommendations(category, securityBrand, workwearFeature, coolingFeature, coolingType);
 
-  // 選択された特徴を文字列で取得する関数
   const getSelectedFeature = () => {
     if (securityBrand) return securityBrand;
     if (workwearFeature) return workwearFeature;
@@ -82,13 +89,15 @@ export default function WorkwearSelector() {
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (isSubmitting) return;
+
+    if (!isAgreed) {
+      toast.error("利用規約に同意してください");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-
-      // APIエンドポイントにデータを送信
       const selectedFeature = getSelectedFeature();
       const response = await fetch("/api/workwear_recommend", {
         method: "POST",
@@ -98,6 +107,7 @@ export default function WorkwearSelector() {
         body: JSON.stringify({
           ...contactInfo,
           category,
+          coolingType,
           selectedFeature,
           recommendations: recommendations || [],
         }),
@@ -108,13 +118,8 @@ export default function WorkwearSelector() {
         throw new Error(errorData.message || "お問い合わせの送信に失敗しました");
       }
 
-      // 成功メッセージをセット
       setSuccessMessage("お問い合わせを受け付けました。担当者から数日以内にご連絡いたします。");
-
-      // メインダイアログを閉じる
       setIsDialogOpen(false);
-
-      // 成功ダイアログを表示
       setShowSuccessDialog(true);
     } catch (error) {
       console.error("問い合わせ送信エラー:", error);
@@ -124,9 +129,82 @@ export default function WorkwearSelector() {
     }
   };
 
+  // 季節選択のレンダリング
+  const renderSeasonSelection = () => (
+    <div className="grid grid-cols-2 gap-4">
+      <Card
+        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-amber-50 to-orange-50"
+        onClick={() => {
+          setSeason("summer");
+          setCategory(category);
+        }}
+      >
+        <CardHeader className="text-center">
+          <Sun className="w-12 h-12 mx-auto mb-2 text-orange-500" />
+          <CardTitle className="text-orange-700">夏用</CardTitle>
+          <CardDescription>暑さ対策重視の夏向けモデル</CardDescription>
+        </CardHeader>
+      </Card>
+      <Card
+        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-50"
+        onClick={() => {
+          setSeason("all");
+          setCategory(category);
+        }}
+      >
+        <CardHeader className="text-center">
+          <Snowflake className="w-12 h-12 mx-auto mb-2 text-blue-500" />
+          <CardTitle className="text-blue-700">通年用</CardTitle>
+          <CardDescription>オールシーズン対応モデル</CardDescription>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+
+  // 空調服タイプ選択のレンダリング
+  const renderCoolingTypeSelection = () => (
+    <div className="grid grid-cols-3 gap-4">
+      <Card
+        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-purple-50 to-violet-50"
+        onClick={() => {
+          setCoolingType("vest");
+        }}
+      >
+        <CardHeader className="text-center">
+          <Wind className="w-12 h-12 mx-auto mb-2 text-purple-500" />
+          <CardTitle className="text-purple-700">ベスト</CardTitle>
+          <CardDescription>動きやすいベストタイプ</CardDescription>
+        </CardHeader>
+      </Card>
+      <Card
+        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-cyan-50 to-blue-50"
+        onClick={() => {
+          setCoolingType("short");
+        }}
+      >
+        <CardHeader className="text-center">
+          <Wind className="w-12 h-12 mx-auto mb-2 text-cyan-500" />
+          <CardTitle className="text-cyan-700">半袖</CardTitle>
+          <CardDescription>腕まわりも涼しく快適</CardDescription>
+        </CardHeader>
+      </Card>
+      <Card
+        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-emerald-50 to-green-50"
+        onClick={() => {
+          setCoolingType("long");
+        }}
+      >
+        <CardHeader className="text-center">
+          <Wind className="w-12 h-12 mx-auto mb-2 text-emerald-500" />
+          <CardTitle className="text-emerald-700">長袖</CardTitle>
+          <CardDescription>紫外線対策も万全</CardDescription>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="fixed-selector">
-      {/* 固定ボタン */}
       <div className="fixed bottom-4 right-4 z-50">
         <Button
           onClick={() => setIsDialogOpen(true)}
@@ -138,13 +216,11 @@ export default function WorkwearSelector() {
           }}
           size="lg"
         >
-          {/* 光るエフェクト */}
           <span className={`absolute inset-0 bg-white/20 skew-x-[-20deg] transform -translate-x-full ${isGlowing ? "animate-shine" : "opacity-0"}`}></span>
-          業界最適ワークウェアを見つける
+          あなたにピッタリの作業着を見つける
         </Button>
       </div>
 
-      {/* アニメーション用のスタイル */}
       <style jsx global>{`
         @keyframes gradientShift {
           0% {
@@ -172,12 +248,11 @@ export default function WorkwearSelector() {
         }
       `}</style>
 
-      {/* ダイアログ本体 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-gradient-to-b from-white to-gray-50">
           <DialogHeader>
-            <DialogTitle className="text-2xl">
-              {showContactForm ? "お見積り・問い合わせ情報の入力" : showResults ? "プロ厳選のおすすめ製品" : "職場に最適なワークウェアを探す"}
+            <DialogTitle className="text-2xl text-center bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-600 to-primary">
+              {showContactForm ? "お見積り・問い合わせ情報の入力" : showResults ? "プロが厳選！おすすめウェア" : "最適な作業着を探そう"}
             </DialogTitle>
           </DialogHeader>
 
@@ -192,7 +267,7 @@ export default function WorkwearSelector() {
                   value={contactInfo.companyName}
                   onChange={(e) => setContactInfo({ ...contactInfo, companyName: e.target.value })}
                   required
-                  placeholder="例：株式会社プロフェッショナルウェア"
+                  placeholder="例：株式会社ワークスタイル"
                   className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
@@ -205,7 +280,7 @@ export default function WorkwearSelector() {
                   value={contactInfo.contactPerson}
                   onChange={(e) => setContactInfo({ ...contactInfo, contactPerson: e.target.value })}
                   required
-                  placeholder="例：佐藤 一郎"
+                  placeholder="例：田中 太郎"
                   className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
@@ -219,16 +294,26 @@ export default function WorkwearSelector() {
                   value={contactInfo.email}
                   onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
                   required
-                  placeholder="例：contact@pro-wear.co.jp"
+                  placeholder="例：info@workstyle.co.jp"
                   className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
+
+              {/* 同意セクションを別コンポーネントとして使用 */}
+              <ConsentSection isAgreed={isAgreed} setIsAgreed={setIsAgreed} />
+
               <div className="space-y-3 pt-4">
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white" disabled={isSubmitting}>
-                  {isSubmitting ? "送信中..." : "無料でお見積り依頼"}
+                <Button
+                  type="submit"
+                  className={`w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all ${
+                    !isAgreed && "opacity-50 cursor-not-allowed"
+                  }`}
+                  disabled={isSubmitting || !isAgreed}
+                >
+                  {isSubmitting ? "送信中..." : "送信"}
                 </Button>
                 <div className="flex justify-end">
-                  <Button type="button" variant="outline" onClick={() => setShowContactForm(false)} className="border-gray-300">
+                  <Button type="button" variant="outline" onClick={() => setShowContactForm(false)} className="border-gray-300 hover:bg-gray-100">
                     戻る
                   </Button>
                 </div>
@@ -238,140 +323,156 @@ export default function WorkwearSelector() {
             <div className="grid gap-4">
               {!category && (
                 <div className="grid grid-cols-3 gap-4">
-                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => setCategory("workwear")}>
+                  <Card
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-50"
+                    onClick={() => setCategory("workwear")}
+                  >
                     <CardHeader className="text-center">
-                      <Shirt className="w-12 h-12 mx-auto mb-2" />
-                      <CardTitle>ワークウェア</CardTitle>
+                      <Shirt className="w-12 h-12 mx-auto mb-2 text-blue-600" />
+                      <CardTitle className="text-blue-700">作業服</CardTitle>
                     </CardHeader>
                   </Card>
-                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => setCategory("security")}>
+                  <Card
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-slate-50 to-gray-100"
+                    onClick={() => setCategory("security")}
+                  >
                     <CardHeader className="text-center">
-                      <Shield className="w-12 h-12 mx-auto mb-2" />
-                      <CardTitle>セキュリティウェア</CardTitle>
+                      <Shield className="w-12 h-12 mx-auto mb-2 text-slate-700" />
+                      <CardTitle className="text-slate-800">警備服</CardTitle>
                     </CardHeader>
                   </Card>
-                  <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => setCategory("cooling")}>
+                  <Card
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-cyan-50 to-sky-100"
+                    onClick={() => setCategory("cooling")}
+                  >
                     <CardHeader className="text-center">
-                      <Wind className="w-12 h-12 mx-auto mb-2" />
-                      <CardTitle>クーリングウェア</CardTitle>
+                      <Wind className="w-12 h-12 mx-auto mb-2 text-cyan-600" />
+                      <CardTitle className="text-cyan-700">空調服</CardTitle>
                     </CardHeader>
                   </Card>
                 </div>
               )}
 
-              {category === "security" && (
+              {category === "cooling" && !coolingType && renderCoolingTypeSelection()}
+
+              {(category === "workwear" || category === "security") && !season && renderSeasonSelection()}
+
+              {category === "security" && season && (
                 <div className="grid grid-cols-2 gap-4">
                   <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-gray-50 to-slate-100"
                     onClick={() => {
                       setSecurityBrand("best");
                       setShowResults(true);
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>プレミアムライン</CardTitle>
+                      <CardTitle className="text-slate-800">プレミアムライン</CardTitle>
                       <CardDescription>高品質・高機能なセキュリティウェア</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-100"
                     onClick={() => {
                       setSecurityBrand("kinsei");
                       setShowResults(true);
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>スタンダードライン</CardTitle>
+                      <CardTitle className="text-blue-800">スタンダードライン</CardTitle>
                       <CardDescription>コストパフォーマンスに優れた警備服</CardDescription>
                     </CardHeader>
                   </Card>
                 </div>
               )}
 
-              {category === "workwear" && (
+              {category === "workwear" && season && (
                 <div className="grid grid-cols-3 gap-4">
                   <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-indigo-50 to-violet-100"
                     onClick={() => {
-                      setWorkwearFeature("durability");
+                      setWorkwearFeature("premium");
                       setShowResults(true);
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>タフネス重視</CardTitle>
-                      <CardDescription>過酷な環境でも長持ち</CardDescription>
+                      <CardTitle className="text-indigo-800">高機能重視</CardTitle>
+                      <CardDescription>最新テクノロジー素材採用</CardDescription>
+                      <Star className="w-8 h-8 mx-auto mt-2 text-indigo-500" />
                     </CardHeader>
                   </Card>
                   <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
-                    onClick={() => {
-                      setWorkwearFeature("comfort");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle>快適性重視</CardTitle>
-                      <CardDescription>長時間の着用も快適に</CardDescription>
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-green-50 to-emerald-100"
                     onClick={() => {
                       setWorkwearFeature("cost");
                       setShowResults(true);
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>効率性重視</CardTitle>
-                      <CardDescription>高コスパで実用的</CardDescription>
+                      <CardTitle className="text-emerald-800">安さ重視</CardTitle>
+                      <CardDescription>コスト重視で大量導入向け</CardDescription>
+                      <DollarSign className="w-8 h-8 mx-auto mt-2 text-emerald-500" />
+                    </CardHeader>
+                  </Card>
+                  <Card
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-rose-50 to-red-100"
+                    onClick={() => {
+                      setWorkwearFeature("style");
+                      setShowResults(true);
+                    }}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-rose-800">カッコよさ重視</CardTitle>
+                      <CardDescription>デザイン性の高いモデル</CardDescription>
+                      <Heart className="w-8 h-8 mx-auto mt-2 text-rose-500" />
                     </CardHeader>
                   </Card>
                 </div>
               )}
 
-              {category === "cooling" && (
+              {category === "cooling" && coolingType && (
                 <div className="grid grid-cols-3 gap-4">
                   <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-purple-50 to-indigo-100"
                     onClick={() => {
                       setCoolingFeature("battery");
                       setShowResults(true);
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>持続力重視</CardTitle>
-                      <CardDescription>長時間稼働可能なモデル</CardDescription>
+                      <CardTitle className="text-indigo-800">持続力重視</CardTitle>
+                      <CardDescription>長時間稼働可能なバッテリー</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-cyan-50 to-blue-100"
                     onClick={() => {
                       setCoolingFeature("airflow");
                       setShowResults(true);
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>冷却力重視</CardTitle>
-                      <CardDescription>強力な冷却システム搭載</CardDescription>
+                      <CardTitle className="text-blue-800">風量重視</CardTitle>
+                      <CardDescription>強力なファンシステム搭載</CardDescription>
                     </CardHeader>
                   </Card>
                   <Card
-                    className="cursor-pointer hover:border-primary transition-colors"
+                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-teal-50 to-emerald-100"
                     onClick={() => {
-                      setCoolingFeature("lightweight");
+                      setCoolingFeature("cost");
                       setShowResults(true);
                     }}
                   >
                     <CardHeader>
-                      <CardTitle>軽量性重視</CardTitle>
-                      <CardDescription>着用感の軽い新開発素材</CardDescription>
+                      <CardTitle className="text-emerald-800">安さ重視</CardTitle>
+                      <CardDescription>コスト重視で大量導入向け</CardDescription>
                     </CardHeader>
                   </Card>
                 </div>
               )}
 
               {category && (
-                <Button variant="outline" onClick={resetSelections} className="mt-4">
+                <Button variant="outline" onClick={resetSelections} className="mt-4 hover:bg-gray-100 transition-colors">
                   選択をリセット
                 </Button>
               )}
@@ -380,22 +481,22 @@ export default function WorkwearSelector() {
             <div className="space-y-4">
               <div className="grid gap-4">
                 {recommendations.map((recommendation, index) => (
-                  <Card key={index}>
+                  <Card key={index} className="bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-shadow">
                     <CardHeader>
-                      <CardTitle>{recommendation}</CardTitle>
+                      <CardTitle className="text-gray-800 text-sm">{recommendation}</CardTitle>
                     </CardHeader>
                   </Card>
                 ))}
               </div>
               <Button
                 onClick={() => setShowContactForm(true)}
-                className="w-full bg-orange-400 hover:bg-orange-500 text-white text-lg font-bold shadow-md transition-all hover:shadow-lg py-3 rounded-lg"
+                className="w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white text-lg font-bold shadow-md transition-all hover:shadow-lg py-3 rounded-lg"
               >
-                無料サンプル・お見積り依頼
+                提案を希望する
               </Button>
               <div className="grid grid-cols-2 gap-2">
                 <DialogClose asChild>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full hover:bg-gray-100">
                     終了
                   </Button>
                 </DialogClose>
@@ -404,8 +505,10 @@ export default function WorkwearSelector() {
                   onClick={() => {
                     setShowResults(false);
                     setCategory(null);
+                    setSeason(null);
+                    setCoolingType(null);
                   }}
-                  className="w-full"
+                  className="w-full hover:bg-gray-100"
                 >
                   選び直す
                 </Button>
@@ -415,7 +518,6 @@ export default function WorkwearSelector() {
         </DialogContent>
       </Dialog>
 
-      {/* 成功ダイアログ - 共通コンポーネントを使用 */}
       <SuccessDialog isOpen={showSuccessDialog} onClose={() => setShowSuccessDialog(false)} message={successMessage} />
     </div>
   );
