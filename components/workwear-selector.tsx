@@ -8,7 +8,8 @@ import { Shirt, Shield, Wind, Sun, Snowflake, Star, DollarSign, Heart } from "lu
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { getRecommendations, Category, SecurityBrand, WorkwearFeature, CoolingFeature } from "@/lib/workwear-recommendations";
+import { getRecommendations } from "@/lib/workwear-recommendations";
+import { Category, SecurityBrand, WorkwearFeature, CoolingFeature, CoolingType, Season } from "@/lib/enums";
 import SuccessDialog from "@/components/SuccessDialog";
 import ConsentSection from "@/components/ConsentSection";
 
@@ -18,10 +19,7 @@ interface ContactInfo {
   email: string;
 }
 
-type Season = "all" | "summer" | null;
-type CoolingType = "vest" | "short" | "long" | null;
-
-export default function WorkwearSelector() {
+export default function WorkwearAdvisor() {
   // 状態管理
   const [category, setCategory] = useState<Category>(null);
   const [season, setSeason] = useState<Season>(null);
@@ -80,13 +78,6 @@ export default function WorkwearSelector() {
 
   const recommendations = getRecommendations(category, securityBrand, workwearFeature, coolingFeature, coolingType);
 
-  const getSelectedFeature = () => {
-    if (securityBrand) return securityBrand;
-    if (workwearFeature) return workwearFeature;
-    if (coolingFeature) return coolingFeature;
-    return null;
-  };
-
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -98,7 +89,6 @@ export default function WorkwearSelector() {
 
     try {
       setIsSubmitting(true);
-      const selectedFeature = getSelectedFeature();
       const response = await fetch("/api/workwear_recommend", {
         method: "POST",
         headers: {
@@ -107,8 +97,11 @@ export default function WorkwearSelector() {
         body: JSON.stringify({
           ...contactInfo,
           category,
+          season,
           coolingType,
-          selectedFeature,
+          securityBrand,
+          workwearFeature,
+          coolingFeature,
           recommendations: recommendations || [],
         }),
       });
@@ -136,7 +129,6 @@ export default function WorkwearSelector() {
         className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-amber-50 to-orange-50"
         onClick={() => {
           setSeason("summer");
-          setCategory(category);
         }}
       >
         <CardHeader className="text-center">
@@ -149,7 +141,6 @@ export default function WorkwearSelector() {
         className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-50"
         onClick={() => {
           setSeason("all");
-          setCategory(category);
         }}
       >
         <CardHeader className="text-center">
@@ -362,7 +353,7 @@ export default function WorkwearSelector() {
                   <Card
                     className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-gray-50 to-slate-100"
                     onClick={() => {
-                      setSecurityBrand("best");
+                      setSecurityBrand("best1");
                       setShowResults(true);
                     }}
                   >
@@ -374,7 +365,7 @@ export default function WorkwearSelector() {
                   <Card
                     className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-100"
                     onClick={() => {
-                      setSecurityBrand("kinsei");
+                      setSecurityBrand("best2");
                       setShowResults(true);
                     }}
                   >

@@ -1,9 +1,8 @@
-export type Category = "workwear" | "security" | "cooling" | null;
-export type SecurityBrand = "best" | "kinsei" | null;
-export type WorkwearFeature = "premium" | "cost" | "style" | null;
-export type CoolingFeature = "battery" | "airflow" | "cost" | null;
-export type CoolingType = "vest" | "short" | "long" | null;
+import { Category, SecurityBrand, WorkwearFeature, CoolingFeature, CoolingType } from "@/lib/enums";
 
+/**
+ * カテゴリと選択された特徴に基づいて推奨製品のリストを返す関数
+ */
 export function getRecommendations(
   category: Category,
   securityBrand: SecurityBrand,

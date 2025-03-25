@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { toJapanese, getSelectedFeatureJa } from "@/lib/enums";
 
 // 環境変数からメール設定を取得
 const GMAIL_USER = process.env.GMAIL_USER;
@@ -52,10 +53,41 @@ export async function sendWorkwearInquiryNotification(
   companyName: string,
   contactPerson: string,
   category: string,
+  season: string | null,
+  coolingType: string | null,
+  securityBrand: string | null,
+  workwearFeature: string | null,
+  coolingFeature: string | null,
   selectedProducts: string[]
 ) {
-  // カテゴリーの日本語名を取得
-  const categoryName = getCategoryName(category);
+  // カテゴリー、季節、空調服タイプの日本語名を取得
+  const categoryName = toJapanese("category", category);
+  const seasonName = toJapanese("season", season);
+  const coolingTypeName = toJapanese("coolingType", coolingType);
+
+  // 選択された特徴の日本語名を取得
+  let selectedFeatureName = "未指定";
+  if (category === "workwear" && workwearFeature) {
+    selectedFeatureName = toJapanese("workwearFeature", workwearFeature);
+  } else if (category === "security" && securityBrand) {
+    selectedFeatureName = toJapanese("securityBrand", securityBrand);
+  } else if (category === "cooling" && coolingFeature) {
+    selectedFeatureName = toJapanese("coolingFeature", coolingFeature);
+  }
+
+  // 製品タイプの詳細テキスト作成
+  let productDetailsHtml = `
+    <p><strong>カテゴリ:</strong> ${categoryName}</p>`;
+
+  if (category === "workwear" || category === "security") {
+    productDetailsHtml += `
+    <p><strong>季節:</strong> ${seasonName}</p>
+    <p><strong>特徴:</strong> ${selectedFeatureName}</p>`;
+  } else if (category === "cooling") {
+    productDetailsHtml += `
+    <p><strong>タイプ:</strong> ${coolingTypeName}</p>
+    <p><strong>特徴:</strong> ${selectedFeatureName}</p>`;
+  }
 
   // 製品リストをHTML形式に変換
   const productsHtml = selectedProducts.map((product) => `<li>${product}</li>`).join("");
@@ -63,15 +95,18 @@ export async function sendWorkwearInquiryNotification(
   // 管理者向けメールの本文を作成
   const adminHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #3b82f6;">新しいワークウェア提案依頼がありました</h2>
+      <h2 style="color: #3b82f6;">新しい作業着アドバイザー問い合わせがありました</h2>
       
       <div style="background-color: #f8fafc; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3 style="margin-top: 0; color: #0f172a;">問い合わせ詳細</h3>
         <p><strong>会社名:</strong> ${companyName}</p>
         <p><strong>担当者名:</strong> ${contactPerson}</p>
         <p><strong>メールアドレス:</strong> ${customerEmail}</p>
-        <p><strong>カテゴリー:</strong> ${categoryName}</p>
-        <p><strong>興味のある製品:</strong></p>
+        
+        <h4 style="margin-top: 15px; color: #334155;">選択内容</h4>
+        ${productDetailsHtml}
+        
+        <h4 style="margin-top: 15px; color: #334155;">おすすめ製品</h4>
         <ul style="padding-left: 20px;">
           ${productsHtml}
         </ul>
@@ -84,23 +119,7 @@ export async function sendWorkwearInquiryNotification(
   // 管理者へのメール送信
   return sendEmail({
     to: GMAIL_USER || "",
-    subject: "【ワークウェア提案依頼】新規お問い合わせ",
+    subject: "【作業着アドバイザー】新規お問い合わせ",
     html: adminHtml,
   });
-}
-
-/**
- * カテゴリーコードから日本語名を取得
- */
-function getCategoryName(category: string): string {
-  switch (category) {
-    case "workwear":
-      return "ワークウェア";
-    case "security":
-      return "セキュリティウェア";
-    case "cooling":
-      return "クーリングウェア";
-    default:
-      return "作業服全般";
-  }
 }
