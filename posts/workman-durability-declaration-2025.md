@@ -19,7 +19,7 @@ relatedPosts:
 
 ワークマンは現在、次の5つの業態で合計1,037店舗を展開しています。（2025年1月26日時点）
 
-![ワークマンの店舗数（2025年1月26日現在）](/workman-durability-declaration-2025_1.png)
+![ワークマンの店舗数（2025年1月26日現在）](/workman-durability-declaration-2025/img1.png)
 
 最も店舗数が多いのは、作業服と一般向けアパレルを扱う「WORKMAN Plus」の615店。次いで、作業服中心の「ワークマン」が318店と続きます。 
 
@@ -31,7 +31,7 @@ relatedPosts:
 
 作業服・作業用品の大手専門店チェーン「ワークマン」が、2025年の事業方針として製品開発リソースの8割を作業服分野へ投入することを発表しました。
 
-![ワークマンの方針転換](/workman-durability-declaration-2025_2.png)
+![ワークマンの方針転換](/workman-durability-declaration-2025/img2.png)
 
 近年は一般客向けの「#ワークマン女子」店舗の展開に力を入れていましたが、ここにきて本業である作業服の強化へ舵を切ります。「ワーク強靭化」と銘打ち、機能性とコストパフォーマンスに優れた新製品を次々と投入。初年度となる2025年は、これらの新製品で50億円の売上増加を目指すとのことです。
 
@@ -49,17 +49,17 @@ relatedPosts:
 注目アイテムをいくつかピックアップしてご紹介しましょう。
 
 #### 1. 猛暑対策作業服「XShelter」
-![ワークマン XShelter 暑熱シリーズ](/workman-durability-declaration-2025_3.png)
+![ワークマン XShelter 暑熱シリーズ](/workman-durability-declaration-2025/img3.png)
 
 外気温と輻射熱、湿度、風速の「暑熱4大リスク」を軽減するオリジナル素材を採用。14種類もの暑熱対策機能を備えた決定版の作業服です。
 
 #### 2. 驚異の透湿・放湿性を誇るレインウェア
-![ワークマン 驚異の透湿・放湿性を誇るレインウェア](/workman-durability-declaration-2025_4.png)
+![ワークマン 驚異の透湿・放湿性を誇るレインウェア](/workman-durability-declaration-2025/img4.png)
 
 ワークマン標準のレインウェアの7倍もの透湿性と放湿性を実現。蒸れにくく快適な着心地で、雨の日の作業効率が格段にアップします。 
 
 #### 3. 高コスパ通年作業服「ワンダーストレッチ」
-![ワークマン 通年作業服 ワンダーストレッチシリーズ](/workman-durability-declaration-2025_5.png)
+![ワークマン 通年作業服 ワンダーストレッチシリーズ](/workman-durability-declaration-2025/img5.png)
 伸縮性に優れた生地を採用しつつ、上下セットで3,400円という低価格を実現。現場の定番になりそうな一着です。
 
 ##### 商品資料：[https://www.workman.co.jp/wp-content/uploads/2025/01/250130.pdf](https://www.workman.co.jp/wp-content/uploads/2025/01/250130.pdf)
