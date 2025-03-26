@@ -4,7 +4,6 @@ import { formatDate } from "@/lib/utils";
 import { Share2, Clock, Tag, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 
 // WorkwearSelectorをクライアントサイドのみでレンダリングするために動的インポートを使用
 const WorkwearSelector = dynamic(() => import("./workwear-selector"), { ssr: false });
@@ -103,13 +102,6 @@ export default function BlogLayout({
                 {category}
               </Link>
             </div>
-
-            {/* アイキャッチ画像（あれば表示） */}
-            {thumbnail && (
-              <div className="mb-8 -mx-8">
-                <Image src={thumbnail} alt={title} width={800} height={450} className="w-full h-auto rounded-t-lg object-cover" priority itemProp="image" />
-              </div>
-            )}
 
             {/* タイトル */}
             <h1 className="mb-6 text-3xl font-bold tracking-tight mt-0" itemProp="headline">
