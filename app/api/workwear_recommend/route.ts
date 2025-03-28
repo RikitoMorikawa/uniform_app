@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       workwearFeature,
       coolingFeature,
       recommendations,
-      consent, // 同意フラグを追加
+      comments, // コメント欄を追加
+      consent, // 同意フラグ
     } = body;
 
     if (!companyName || !contactPerson || !email) {
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
       coolingType: coolingTypeJa,
       selectedFeature: selectedFeatureJa,
       recommendations,
+      comments, // コメント欄の内容を保存
       status: "新規", // 新規問い合わせのステータス（日本語）
       consent: true, // 同意フラグをtrueで保存
       createdAt,
@@ -90,7 +92,8 @@ export async function POST(req: NextRequest) {
         securityBrand,
         workwearFeature,
         coolingFeature,
-        recommendations || []
+        recommendations || [],
+        comments // コメント内容もメールに含める
       );
 
       if (notificationResult.success) {

@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { toJapanese, getSelectedFeatureJa } from "@/lib/enums";
+import { comment } from "postcss";
 
 // 環境変数からメール設定を取得
 const GMAIL_USER = process.env.GMAIL_USER;
@@ -58,7 +59,8 @@ export async function sendWorkwearInquiryNotification(
   securityBrand: string | null,
   workwearFeature: string | null,
   coolingFeature: string | null,
-  selectedProducts: string[]
+  selectedProducts: string[],
+  comment: string
 ) {
   // カテゴリー、季節、空調服タイプの日本語名を取得
   const categoryName = toJapanese("category", category);
@@ -94,27 +96,32 @@ export async function sendWorkwearInquiryNotification(
 
   // 管理者向けメールの本文を作成
   const adminHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #3b82f6;">新しい作業着アドバイザー問い合わせがありました</h2>
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h2 style="color: #3b82f6;">新しい作業着アドバイザー問い合わせがありました</h2>
+    
+    <div style="background-color: #f8fafc; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h3 style="margin-top: 0; color: #0f172a;">問い合わせ詳細</h3>
+      <p><strong>会社名:</strong> ${companyName}</p>
+      <p><strong>担当者名:</strong> ${contactPerson}</p>
+      <p><strong>メールアドレス:</strong> ${customerEmail}</p>
       
-      <div style="background-color: #f8fafc; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <h3 style="margin-top: 0; color: #0f172a;">問い合わせ詳細</h3>
-        <p><strong>会社名:</strong> ${companyName}</p>
-        <p><strong>担当者名:</strong> ${contactPerson}</p>
-        <p><strong>メールアドレス:</strong> ${customerEmail}</p>
-        
-        <h4 style="margin-top: 15px; color: #334155;">選択内容</h4>
-        ${productDetailsHtml}
-        
-        <h4 style="margin-top: 15px; color: #334155;">おすすめ製品</h4>
-        <ul style="padding-left: 20px;">
-          ${productsHtml}
-        </ul>
+      <h4 style="margin-top: 15px; color: #334155;">選択内容</h4>
+      ${productDetailsHtml}
+      
+      <h4 style="margin-top: 15px; color: #334155;">おすすめ製品</h4>
+      <ul style="padding-left: 20px;">
+        ${productsHtml}
+      </ul>
+      
+      <h4 style="margin-top: 15px; color: #334155;">お客様コメント</h4>
+      <div style="background-color: #ffffff; padding: 10px; border-left: 3px solid #3b82f6; margin-top: 5px;">
+        ${comment ? comment : "特になし"}
       </div>
-      
-      <p>管理画面からこの問い合わせの詳細を確認し、対応してください。</p>
     </div>
-  `;
+    
+    <p>管理画面からこの問い合わせの詳細を確認し、対応してください。</p>
+  </div>
+`;
 
   // 管理者へのメール送信
   return sendEmail({

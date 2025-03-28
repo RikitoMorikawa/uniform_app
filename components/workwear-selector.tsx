@@ -12,11 +12,13 @@ import { getRecommendations } from "@/lib/workwear-recommendations";
 import { Category, SecurityBrand, WorkwearFeature, CoolingFeature, CoolingType, Season } from "@/lib/enums";
 import SuccessDialog from "@/components/SuccessDialog";
 import ConsentSection from "@/components/ConsentSection";
+import { Textarea } from "./ui/textarea";
 
 interface ContactInfo {
   companyName: string;
   contactPerson: string;
   email: string;
+  comments: string;
 }
 
 export default function WorkwearAdvisor() {
@@ -38,6 +40,7 @@ export default function WorkwearAdvisor() {
     companyName: "",
     contactPerson: "",
     email: "",
+    comments: "",
   });
 
   // 同意チェックボックスのstate
@@ -73,6 +76,7 @@ export default function WorkwearAdvisor() {
       companyName: "",
       contactPerson: "",
       email: "",
+      comments: "",
     });
   };
 
@@ -290,6 +294,19 @@ export default function WorkwearAdvisor() {
                   required
                   placeholder="例：info@workstyle.co.jp"
                   className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                />
+              </div>
+              {/* メールアドレス入力欄の後に追加 */}
+              <div className="space-y-2">
+                <Label htmlFor="comments" className="text-foreground font-medium">
+                  お問い合わせ内容・ご要望
+                </Label>
+                <Textarea
+                  id="comments"
+                  value={contactInfo.comments}
+                  onChange={(e) => setContactInfo({ ...contactInfo, comments: e.target.value })}
+                  placeholder="ご質問やご要望があればご記入ください"
+                  className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors min-h-[100px]"
                 />
               </div>
 
