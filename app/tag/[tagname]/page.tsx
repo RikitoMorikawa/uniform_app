@@ -46,32 +46,35 @@ export default async function TagPage({ params }: { params: { tagname: string } 
         {filteredPosts.length > 0 ? (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredPosts.map((post) => (
-              <article key={post.id} className="bg-card rounded-lg shadow-md overflow-hidden border border-muted transition-all hover:shadow-lg">
+              <article key={post.id} className="bg-card rounded-lg shadow-md overflow-hidden border border-muted transition-all hover:shadow-lg group relative">
+                {/* 記事全体をカバーする透明なリンク - 最優先でクリック */}
+                <Link href={`/posts/${post.id}`} className="absolute inset-0 z-10" aria-label={post.title}>
+                  <span className="sr-only">{post.title}を読む</span>
+                </Link>
+
                 {post.thumbnail ? (
-                  <Link href={`/posts/${post.id}`} className="block mt-2 h-40 overflow-hidden">
+                  <div className="relative w-full h-48 overflow-hidden">
                     <Image
                       src={post.thumbnail.startsWith("/") ? post.thumbnail : `/${post.thumbnail}`}
                       alt={post.title}
                       width={640}
                       height={360}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
-                  </Link>
+                  </div>
                 ) : (
-                  <div className="h-40 bg-muted/50 flex items-center justify-center">
+                  <div className="h-48 bg-muted/50 flex items-center justify-center">
                     <span className="text-muted-foreground">No Image</span>
                   </div>
                 )}
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{post.category}</span>
+                    <Link href={`/category/${encodeURIComponent(post.category)}`} className="relative z-20">
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full hover:bg-primary/20 transition-colors">{post.category}</span>
+                    </Link>
                     <time className="text-xs text-muted-foreground">{formatDate(new Date(post.date))}</time>
                   </div>
-                  <h2 className="text-xl font-semibold mt-2 mb-3 line-clamp-2">
-                    <Link href={`/posts/${post.id}`} className="hover:text-primary transition-colors">
-                      {post.title}
-                    </Link>
-                  </h2>
+                  <h2 className="text-xl font-semibold mt-2 mb-3 line-clamp-2 group-hover:text-primary transition-colors">{post.title}</h2>
                   <p className="text-muted-foreground text-sm line-clamp-2 mb-4">{post.excerpt}</p>
                   <div className="flex flex-wrap gap-2">
                     {post.tags &&
@@ -79,7 +82,7 @@ export default async function TagPage({ params }: { params: { tagname: string } 
                         <Link
                           key={index}
                           href={`/tag/${encodeURIComponent(tag)}`}
-                          className="text-xs bg-muted px-3 py-1 rounded-full hover:bg-muted/80 transition-colors"
+                          className="text-xs bg-muted px-3 py-1 rounded-full hover:bg-muted/80 transition-colors relative z-20"
                         >
                           #{tag}
                         </Link>

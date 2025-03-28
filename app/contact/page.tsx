@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useState } from "react";
 import { ContactFormData } from "@/types/contact"; // 型定義がある場合
 import SuccessDialog from "@/components/SuccessDialog";
+import ConsentSection from "@/components/ConsentSection";
 
 const formSchema = z.object({
   companyName: z.string().min(2, {
@@ -45,6 +46,9 @@ const formSchema = z.object({
   message: z.string().min(10, {
     message: "お問い合わせ内容は10文字以上で入力してください。",
   }),
+  consent: z.boolean().refine((val) => val === true, {
+    message: "個人情報の取り扱いに同意していただく必要があります。",
+  }),
 });
 
 const purposes = [
@@ -59,6 +63,7 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isAgreed, setIsAgreed] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,12 +81,25 @@ export default function ContactPage() {
       preferredMaterials: "",
       needsConsultation: false,
       message: "",
+      consent: false,
     },
   });
+
+  // 同意状態の変更を監視して、フォームの値を更新
+  const handleConsentChange = (value: boolean) => {
+    setIsAgreed(value);
+    form.setValue("consent", value);
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsSubmitting(true);
+
+      // 同意確認
+      if (!values.consent) {
+        toast.error("個人情報の取り扱いに同意していただく必要があります。");
+        return;
+      }
 
       // APIルートを呼び出し
       const response = await fetch("/api/contact", {
@@ -101,6 +119,7 @@ export default function ContactPage() {
         setShowSuccessDialog(true);
         // フォームをリセット
         form.reset();
+        setIsAgreed(false);
       } else {
         throw new Error(result.error || "エラーが発生しました。");
       }
@@ -319,7 +338,23 @@ export default function ContactPage() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {/* 同意セクションを追加 */}
+              <div className="mt-6 border-t pt-6">
+                <FormField
+                  control={form.control}
+                  name="consent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <ConsentSection isAgreed={isAgreed} setIsAgreed={handleConsentChange} />
+                      </FormControl>
+                      <FormMessage className="mt-2" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting || !isAgreed}>
                 {isSubmitting ? "送信中..." : "送信する"}
               </Button>
             </form>

@@ -78,12 +78,14 @@ export default function WorkwearAdvisor() {
 
   const recommendations = getRecommendations(category, securityBrand, workwearFeature, coolingFeature, coolingType);
 
+  // handleContactSubmit関数内で同意フラグを送信する部分
+
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
 
     if (!isAgreed) {
-      toast.error("利用規約に同意してください");
+      toast.error("個人情報の取り扱いに同意してください");
       return;
     }
 
@@ -103,6 +105,7 @@ export default function WorkwearAdvisor() {
           workwearFeature,
           coolingFeature,
           recommendations: recommendations || [],
+          consent: isAgreed, // 同意フラグを追加
         }),
       });
 

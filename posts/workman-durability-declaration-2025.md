@@ -4,11 +4,10 @@ date: "2025-03-24T12:43:00+09:00"
 category: "ニュース"
 excerpt: "作業服大手のワークマンが製品開発リソースの8割を作業服分野へシフト。高機能な新製品「ワーク強靭化」シリーズを投入し、50億円の売上増加を目指します。建設業界や製造業の現場で働く人々の注目を集めそうです。"
 tags: ["ワークマン", "作業服", "ワーク強靭化", "新製品", "売上増加", "建設業界", "製造業", "機能性"]
-author: "uniform-mag"
-# thumbnail: "https://example.com/workman-new-products-2025.jpg"
+author: "uniform-navi"
 relatedPosts:
-  - title: "【比較】人気の作業服ブランド10社の特徴と価格帯" 
-    slug: "popular-workwear-brands-comparison"
+  - title: "【おすすめ15選】2025年最新人気作業着メーカー一覧！" 
+    slug: "popular-workwear-makers-2025"
 ---
 
 ### ワークマンの店舗数は1,000店超に

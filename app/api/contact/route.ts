@@ -12,6 +12,19 @@ export async function POST(request: Request) {
     const formData: ContactFormData = await request.json();
     console.log("フォームデータ受信:", formData);
 
+    // 同意確認
+    if (!formData.consent) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "個人情報の取り扱いに同意していただく必要があります。",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     // データをコレクションに挿入するためのデータ準備
     const contactData = {
       ...formData,

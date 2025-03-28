@@ -14,6 +14,7 @@ export interface ContactFormInput {
   preferredMaterials?: string;
   needsConsultation: boolean;
   message: string;
+  consent?: boolean;
 }
 
 export interface ContactFormData extends ContactFormInput {

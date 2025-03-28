@@ -9,10 +9,27 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // 必要なデータが揃っているか確認
-    const { companyName, contactPerson, email, category, season, coolingType, securityBrand, workwearFeature, coolingFeature, recommendations } = body;
+    const {
+      companyName,
+      contactPerson,
+      email,
+      category,
+      season,
+      coolingType,
+      securityBrand,
+      workwearFeature,
+      coolingFeature,
+      recommendations,
+      consent, // 同意フラグを追加
+    } = body;
 
     if (!companyName || !contactPerson || !email) {
       return NextResponse.json({ message: "必須項目が入力されていません" }, { status: 400 });
+    }
+
+    // 同意確認
+    if (!consent) {
+      return NextResponse.json({ message: "個人情報の取り扱いに同意していただく必要があります" }, { status: 400 });
     }
 
     // 現在の日時を取得
@@ -57,6 +74,7 @@ export async function POST(req: NextRequest) {
       selectedFeature: selectedFeatureJa,
       recommendations,
       status: "新規", // 新規問い合わせのステータス（日本語）
+      consent: true, // 同意フラグをtrueで保存
       createdAt,
     });
 
