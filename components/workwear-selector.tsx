@@ -42,6 +42,7 @@ export default function WorkwearAdvisor() {
     email: "",
     comments: "",
   });
+  const [isMobile, setIsMobile] = useState(false);
 
   // 同意チェックボックスのstate
   const [isAgreed, setIsAgreed] = useState(false);
@@ -53,6 +54,19 @@ export default function WorkwearAdvisor() {
     }, 5000);
 
     return () => clearInterval(glowInterval);
+  }, []);
+
+  // レスポンシブ対応のためのウィンドウサイズ検出
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    // 初期化時に一度実行
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // ダイアログが閉じたときにリセット
@@ -82,8 +96,6 @@ export default function WorkwearAdvisor() {
 
   const recommendations = getRecommendations(category, securityBrand, workwearFeature, coolingFeature, coolingType);
 
-  // handleContactSubmit関数内で同意フラグを送信する部分
-
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -109,7 +121,7 @@ export default function WorkwearAdvisor() {
           workwearFeature,
           coolingFeature,
           recommendations: recommendations || [],
-          consent: isAgreed, // 同意フラグを追加
+          consent: isAgreed,
         }),
       });
 
@@ -131,7 +143,7 @@ export default function WorkwearAdvisor() {
 
   // 季節選択のレンダリング
   const renderSeasonSelection = () => (
-    <div className="grid grid-cols-2 gap-4">
+    <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-4`}>
       <Card
         className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-amber-50 to-orange-50"
         onClick={() => {
@@ -161,7 +173,7 @@ export default function WorkwearAdvisor() {
 
   // 空調服タイプ選択のレンダリング
   const renderCoolingTypeSelection = () => (
-    <div className="grid grid-cols-3 gap-4">
+    <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4`}>
       <Card
         className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-purple-50 to-violet-50"
         onClick={() => {
@@ -244,288 +256,297 @@ export default function WorkwearAdvisor() {
         .animate-shine {
           animation: shine 1s ease;
         }
+
+        /* モバイル対応のスクロール設定 */
+        .dialog-scrollable {
+          max-height: 85vh;
+          overflow-y: auto;
+          padding-bottom: 20px;
+        }
       `}</style>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-gradient-to-b from-white to-gray-50">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-center bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-600 to-primary">
-              {showContactForm ? "お見積り・問い合わせ情報の入力" : showResults ? "プロが厳選！おすすめウェア" : "最適な作業着を探そう"}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[600px] bg-gradient-to-b from-white to-gray-50 p-0">
+          <div className="dialog-scrollable">
+            <DialogHeader className="p-6 pb-2">
+              <DialogTitle className="text-2xl text-center bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-600 to-primary">
+                {showContactForm ? "お見積り・問い合わせ情報の入力" : showResults ? "プロが厳選！おすすめウェア" : "最適な作業着を探そう"}
+              </DialogTitle>
+            </DialogHeader>
 
-          {showContactForm ? (
-            <form onSubmit={handleContactSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-foreground font-medium">
-                  会社名
-                </Label>
-                <Input
-                  id="companyName"
-                  value={contactInfo.companyName}
-                  onChange={(e) => setContactInfo({ ...contactInfo, companyName: e.target.value })}
-                  required
-                  placeholder="例：株式会社ワークスタイル"
-                  className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contactPerson" className="text-foreground font-medium">
-                  担当者名
-                </Label>
-                <Input
-                  id="contactPerson"
-                  value={contactInfo.contactPerson}
-                  onChange={(e) => setContactInfo({ ...contactInfo, contactPerson: e.target.value })}
-                  required
-                  placeholder="例：田中 太郎"
-                  className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground font-medium">
-                  メールアドレス
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={contactInfo.email}
-                  onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
-                  required
-                  placeholder="例：info@workstyle.co.jp"
-                  className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                />
-              </div>
-              {/* メールアドレス入力欄の後に追加 */}
-              <div className="space-y-2">
-                <Label htmlFor="comments" className="text-foreground font-medium">
-                  お問い合わせ内容・ご要望
-                </Label>
-                <Textarea
-                  id="comments"
-                  value={contactInfo.comments}
-                  onChange={(e) => setContactInfo({ ...contactInfo, comments: e.target.value })}
-                  placeholder="ご質問やご要望があればご記入ください"
-                  className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors min-h-[100px]"
-                />
-              </div>
+            <div className="px-6 pb-6">
+              {showContactForm ? (
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName" className="text-foreground font-medium">
+                      会社名
+                    </Label>
+                    <Input
+                      id="companyName"
+                      value={contactInfo.companyName}
+                      onChange={(e) => setContactInfo({ ...contactInfo, companyName: e.target.value })}
+                      required
+                      placeholder="例：株式会社ワークスタイル"
+                      className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPerson" className="text-foreground font-medium">
+                      担当者名
+                    </Label>
+                    <Input
+                      id="contactPerson"
+                      value={contactInfo.contactPerson}
+                      onChange={(e) => setContactInfo({ ...contactInfo, contactPerson: e.target.value })}
+                      required
+                      placeholder="例：田中 太郎"
+                      className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-foreground font-medium">
+                      メールアドレス
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={contactInfo.email}
+                      onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
+                      required
+                      placeholder="例：info@workstyle.co.jp"
+                      className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comments" className="text-foreground font-medium">
+                      お問い合わせ内容・ご要望
+                    </Label>
+                    <Textarea
+                      id="comments"
+                      value={contactInfo.comments}
+                      onChange={(e) => setContactInfo({ ...contactInfo, comments: e.target.value })}
+                      placeholder="ご質問やご要望があればご記入ください"
+                      className="bg-white border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary transition-colors min-h-[100px]"
+                    />
+                  </div>
 
-              {/* 同意セクションを別コンポーネントとして使用 */}
-              <ConsentSection isAgreed={isAgreed} setIsAgreed={setIsAgreed} />
+                  <ConsentSection isAgreed={isAgreed} setIsAgreed={setIsAgreed} />
 
-              <div className="space-y-3 pt-4">
-                <Button
-                  type="submit"
-                  className={`w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all ${
-                    !isAgreed && "opacity-50 cursor-not-allowed"
-                  }`}
-                  disabled={isSubmitting || !isAgreed}
-                >
-                  {isSubmitting ? "送信中..." : "送信"}
-                </Button>
-                <div className="flex justify-end">
-                  <Button type="button" variant="outline" onClick={() => setShowContactForm(false)} className="border-gray-300 hover:bg-gray-100">
-                    戻る
+                  <div className="space-y-3 pt-4">
+                    <Button
+                      type="submit"
+                      className={`w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all ${
+                        !isAgreed && "opacity-50 cursor-not-allowed"
+                      }`}
+                      disabled={isSubmitting || !isAgreed}
+                    >
+                      {isSubmitting ? "送信中..." : "送信"}
+                    </Button>
+                    <div className="flex justify-end">
+                      <Button type="button" variant="outline" onClick={() => setShowContactForm(false)} className="border-gray-300 hover:bg-gray-100">
+                        戻る
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              ) : !showResults ? (
+                <div className="grid gap-4">
+                  {!category && (
+                    <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4`}>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-50"
+                        onClick={() => setCategory("workwear")}
+                      >
+                        <CardHeader className="text-center">
+                          <Shirt className="w-12 h-12 mx-auto mb-2 text-blue-600" />
+                          <CardTitle className="text-blue-700">作業服</CardTitle>
+                        </CardHeader>
+                      </Card>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-slate-50 to-gray-100"
+                        onClick={() => setCategory("security")}
+                      >
+                        <CardHeader className="text-center">
+                          <Shield className="w-12 h-12 mx-auto mb-2 text-slate-700" />
+                          <CardTitle className="text-slate-800">警備服</CardTitle>
+                        </CardHeader>
+                      </Card>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-cyan-50 to-sky-100"
+                        onClick={() => setCategory("cooling")}
+                      >
+                        <CardHeader className="text-center">
+                          <Wind className="w-12 h-12 mx-auto mb-2 text-cyan-600" />
+                          <CardTitle className="text-cyan-700">空調服</CardTitle>
+                        </CardHeader>
+                      </Card>
+                    </div>
+                  )}
+
+                  {category === "cooling" && !coolingType && renderCoolingTypeSelection()}
+
+                  {(category === "workwear" || category === "security") && !season && renderSeasonSelection()}
+
+                  {category === "security" && season && (
+                    <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-4`}>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-gray-50 to-slate-100"
+                        onClick={() => {
+                          setSecurityBrand("best1");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-slate-800">プレミアムライン</CardTitle>
+                          <CardDescription>高品質・高機能なセキュリティウェア</CardDescription>
+                        </CardHeader>
+                      </Card>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-100"
+                        onClick={() => {
+                          setSecurityBrand("best2");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-blue-800">スタンダードライン</CardTitle>
+                          <CardDescription>コストパフォーマンスに優れた警備服</CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </div>
+                  )}
+
+                  {category === "workwear" && season && (
+                    <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4`}>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-indigo-50 to-violet-100"
+                        onClick={() => {
+                          setWorkwearFeature("premium");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-indigo-800">高機能重視</CardTitle>
+                          <CardDescription>最新テクノロジー素材採用</CardDescription>
+                          <Star className="w-8 h-8 mx-auto mt-2 text-indigo-500" />
+                        </CardHeader>
+                      </Card>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-green-50 to-emerald-100"
+                        onClick={() => {
+                          setWorkwearFeature("cost");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-emerald-800">安さ重視</CardTitle>
+                          <CardDescription>コスト重視で大量導入向け</CardDescription>
+                          <DollarSign className="w-8 h-8 mx-auto mt-2 text-emerald-500" />
+                        </CardHeader>
+                      </Card>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-rose-50 to-red-100"
+                        onClick={() => {
+                          setWorkwearFeature("style");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-rose-800">カッコよさ重視</CardTitle>
+                          <CardDescription>デザイン性の高いモデル</CardDescription>
+                          <Heart className="w-8 h-8 mx-auto mt-2 text-rose-500" />
+                        </CardHeader>
+                      </Card>
+                    </div>
+                  )}
+
+                  {category === "cooling" && coolingType && (
+                    <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4`}>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-purple-50 to-indigo-100"
+                        onClick={() => {
+                          setCoolingFeature("battery");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-indigo-800">持続力重視</CardTitle>
+                          <CardDescription>長時間稼働可能なバッテリー</CardDescription>
+                        </CardHeader>
+                      </Card>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-cyan-50 to-blue-100"
+                        onClick={() => {
+                          setCoolingFeature("airflow");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-blue-800">風量重視</CardTitle>
+                          <CardDescription>強力なファンシステム搭載</CardDescription>
+                        </CardHeader>
+                      </Card>
+                      <Card
+                        className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-teal-50 to-emerald-100"
+                        onClick={() => {
+                          setCoolingFeature("cost");
+                          setShowResults(true);
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-emerald-800">安さ重視</CardTitle>
+                          <CardDescription>コスト重視で大量導入向け</CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </div>
+                  )}
+
+                  {category && (
+                    <Button variant="outline" onClick={resetSelections} className="mt-4 hover:bg-gray-100 transition-colors">
+                      選択をリセット
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid gap-4">
+                    {recommendations.map((recommendation, index) => (
+                      <Card key={index} className="bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-shadow">
+                        <CardHeader>
+                          <CardTitle className="text-gray-800 text-sm">{recommendation}</CardTitle>
+                        </CardHeader>
+                      </Card>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={() => setShowContactForm(true)}
+                    className="w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white text-lg font-bold shadow-md transition-all hover:shadow-lg py-3 rounded-lg"
+                  >
+                    提案を希望する
                   </Button>
+                  <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-2`}>
+                    <DialogClose asChild>
+                      <Button variant="outline" className="w-full hover:bg-gray-100">
+                        終了
+                      </Button>
+                    </DialogClose>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowResults(false);
+                        setCategory(null);
+                        setSeason(null);
+                        setCoolingType(null);
+                      }}
+                      className="w-full hover:bg-gray-100"
+                    >
+                      選び直す
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </form>
-          ) : !showResults ? (
-            <div className="grid gap-4">
-              {!category && (
-                <div className="grid grid-cols-3 gap-4">
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-50"
-                    onClick={() => setCategory("workwear")}
-                  >
-                    <CardHeader className="text-center">
-                      <Shirt className="w-12 h-12 mx-auto mb-2 text-blue-600" />
-                      <CardTitle className="text-blue-700">作業服</CardTitle>
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-slate-50 to-gray-100"
-                    onClick={() => setCategory("security")}
-                  >
-                    <CardHeader className="text-center">
-                      <Shield className="w-12 h-12 mx-auto mb-2 text-slate-700" />
-                      <CardTitle className="text-slate-800">警備服</CardTitle>
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-cyan-50 to-sky-100"
-                    onClick={() => setCategory("cooling")}
-                  >
-                    <CardHeader className="text-center">
-                      <Wind className="w-12 h-12 mx-auto mb-2 text-cyan-600" />
-                      <CardTitle className="text-cyan-700">空調服</CardTitle>
-                    </CardHeader>
-                  </Card>
-                </div>
-              )}
-
-              {category === "cooling" && !coolingType && renderCoolingTypeSelection()}
-
-              {(category === "workwear" || category === "security") && !season && renderSeasonSelection()}
-
-              {category === "security" && season && (
-                <div className="grid grid-cols-2 gap-4">
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-gray-50 to-slate-100"
-                    onClick={() => {
-                      setSecurityBrand("best1");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-slate-800">プレミアムライン</CardTitle>
-                      <CardDescription>高品質・高機能なセキュリティウェア</CardDescription>
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-blue-50 to-indigo-100"
-                    onClick={() => {
-                      setSecurityBrand("best2");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-blue-800">スタンダードライン</CardTitle>
-                      <CardDescription>コストパフォーマンスに優れた警備服</CardDescription>
-                    </CardHeader>
-                  </Card>
-                </div>
-              )}
-
-              {category === "workwear" && season && (
-                <div className="grid grid-cols-3 gap-4">
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-indigo-50 to-violet-100"
-                    onClick={() => {
-                      setWorkwearFeature("premium");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-indigo-800">高機能重視</CardTitle>
-                      <CardDescription>最新テクノロジー素材採用</CardDescription>
-                      <Star className="w-8 h-8 mx-auto mt-2 text-indigo-500" />
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-green-50 to-emerald-100"
-                    onClick={() => {
-                      setWorkwearFeature("cost");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-emerald-800">安さ重視</CardTitle>
-                      <CardDescription>コスト重視で大量導入向け</CardDescription>
-                      <DollarSign className="w-8 h-8 mx-auto mt-2 text-emerald-500" />
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-rose-50 to-red-100"
-                    onClick={() => {
-                      setWorkwearFeature("style");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-rose-800">カッコよさ重視</CardTitle>
-                      <CardDescription>デザイン性の高いモデル</CardDescription>
-                      <Heart className="w-8 h-8 mx-auto mt-2 text-rose-500" />
-                    </CardHeader>
-                  </Card>
-                </div>
-              )}
-
-              {category === "cooling" && coolingType && (
-                <div className="grid grid-cols-3 gap-4">
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-purple-50 to-indigo-100"
-                    onClick={() => {
-                      setCoolingFeature("battery");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-indigo-800">持続力重視</CardTitle>
-                      <CardDescription>長時間稼働可能なバッテリー</CardDescription>
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-cyan-50 to-blue-100"
-                    onClick={() => {
-                      setCoolingFeature("airflow");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-blue-800">風量重視</CardTitle>
-                      <CardDescription>強力なファンシステム搭載</CardDescription>
-                    </CardHeader>
-                  </Card>
-                  <Card
-                    className="cursor-pointer hover:scale-105 transition-all hover:shadow-lg hover:border-primary/50 bg-gradient-to-br from-teal-50 to-emerald-100"
-                    onClick={() => {
-                      setCoolingFeature("cost");
-                      setShowResults(true);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-emerald-800">安さ重視</CardTitle>
-                      <CardDescription>コスト重視で大量導入向け</CardDescription>
-                    </CardHeader>
-                  </Card>
-                </div>
-              )}
-
-              {category && (
-                <Button variant="outline" onClick={resetSelections} className="mt-4 hover:bg-gray-100 transition-colors">
-                  選択をリセット
-                </Button>
               )}
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid gap-4">
-                {recommendations.map((recommendation, index) => (
-                  <Card key={index} className="bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="text-gray-800 text-sm">{recommendation}</CardTitle>
-                    </CardHeader>
-                  </Card>
-                ))}
-              </div>
-              <Button
-                onClick={() => setShowContactForm(true)}
-                className="w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white text-lg font-bold shadow-md transition-all hover:shadow-lg py-3 rounded-lg"
-              >
-                提案を希望する
-              </Button>
-              <div className="grid grid-cols-2 gap-2">
-                <DialogClose asChild>
-                  <Button variant="outline" className="w-full hover:bg-gray-100">
-                    終了
-                  </Button>
-                </DialogClose>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowResults(false);
-                    setCategory(null);
-                    setSeason(null);
-                    setCoolingType(null);
-                  }}
-                  className="w-full hover:bg-gray-100"
-                >
-                  選び直す
-                </Button>
-              </div>
-            </div>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
 
